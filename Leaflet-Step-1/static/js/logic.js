@@ -2,24 +2,48 @@
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 //var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
 
-var platesUrl = "https://github.com/fraxen/tectonicplates/blob/master/GeoJSON/PB2002_plates.json"
-
 // Perform a GET request to the query URL
 d3.json(queryUrl).then(function(data) {
   // Once we get a response, send the data.features object to the createFeatures function
   console.log(data.features)
   createFeatures(data.features);
 
+//   for (var i = 0; i < data.length; i++) {
+//     var location = data[i].location;
+//     console.log(location)
+//     if (location) {
+//       L.circle([location.coordinates[1], location.coordinates[0]]).addTo(myMap);
+//     }
+//   }
 });
 
 function createFeatures(earthquakeData) {
 
   // Define a function we want to run once for each feature in the features array
   // Give each feature a popup describing the place and time of the earthquake
+
+
   function onEachFeature(feature, layer) {
     layer.bindPopup("<h3>" + feature.properties.place +
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
+
+// Create a circle and pass in some initial options
+// L.circle([45.52, -122.69], {
+//     color: "green",
+//     fillColor: "green",
+//     fillOpacity: 0.75,
+//     radius: 500
+//   }).addTo(myMap);
+
+// var geojsonMarkerOptions = {
+//     radius: 8,
+//     fillColor: "red",
+//     color: "#000",
+//     weight: 1,
+//     opacity: 1,
+//     fillOpacity: 0.8
+// };
 
 
 function geojsonMarkerOptions(mag) {
@@ -112,6 +136,12 @@ function createMap(earthquakes) {
     accessToken: API_KEY
   });
 
+//   var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+//     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+//     maxZoom: 18,
+//     id: "dark-v10",
+//     accessToken: API_KEY
+//   });
 
   // Define a baseMaps object to hold our base layers
 //   var baseMaps = {
