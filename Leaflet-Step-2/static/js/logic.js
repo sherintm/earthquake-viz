@@ -2,23 +2,11 @@
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 //var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
 
-var platesUrl = "https://github.com/fraxen/tectonicplates/blob/master/GeoJSON/PB2002_plates.json"
+var platesUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json"
 
 
 
-
-// Perform a GET request to the query URL
-d3.json(queryUrl).then(function(data) {
-  // Once we get a response, send the data.features object to the createFeatures function
-var platesData = d3.json(platesUrl).then(function(platesData){
-    return platesData;
-  })
-  console.log(data.features)
-  createFeatures(data.features, platesData.features);
-
-});
-
-function createFeatures(earthquakeData) {
+function createFeatures(earthquakeData, platesDataFeatures) {
 
   // Define a function we want to run once for each feature in the features array
   // Give each feature a popup describing the place and time of the earthquake
@@ -26,7 +14,7 @@ function createFeatures(earthquakeData) {
     layer.bindPopup("<h3>" + feature.properties.place +
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
-
+//console.log(plateData)
 
 function geojsonMarkerOptions(mag) {
     return({
@@ -48,8 +36,14 @@ function geojsonMarkerOptions(mag) {
     onEachFeature: onEachFeature
   });
 
+  var plateData = L.geoJSON(platesDataFeatures, {
+    style: function () {
+      return { color: 'orange', stroke: true, weight: 1, fillOpacity: 0 };
+    },
+  });
+
   // Sending our earthquakes layer to the createMap function
-  createMap(earthquakes);
+  createMap(earthquakes,plateData);
 }
 
 function markerRadius(mag){
@@ -106,7 +100,7 @@ function markerColour(mag){
     return colour;
 }
 
-function createMap(earthquakes) {
+function createMap(earthquakes, plateData) {
 
   // Define streetmap and darkmap layers
 //   var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -125,7 +119,7 @@ function createMap(earthquakes) {
 //     accessToken: API_KEY
 //   });
   
-  const grayscaleMap = L.tileLayer(
+  var grayscaleMap = L.tileLayer(
     'https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}',
     {
       attribution:
@@ -136,7 +130,7 @@ function createMap(earthquakes) {
     }
   );
 
-  const satelliteMap = L.tileLayer(
+  var satelliteMap = L.tileLayer(
     'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}',
     {
       attribution:
@@ -147,7 +141,7 @@ function createMap(earthquakes) {
     }
   );
 
-  const outdoorsMap = L.tileLayer(
+  var outdoorsMap = L.tileLayer(
     'https://api.mapbox.com/styles/v1/mapbox/outdoors-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}',
     {
       attribution:
@@ -167,7 +161,8 @@ function createMap(earthquakes) {
 
   // Create overlay object to hold our overlay layer
   var overlayMaps = {
-    Earthquakes: earthquakes
+    Earthquakes: earthquakes,
+    PlateData: plateData
   };
 
   // Create our map, giving it the streetmap and earthquakes layers to display on load
@@ -175,8 +170,8 @@ function createMap(earthquakes) {
     center: [
       37.09, -95.71
     ],
-    zoom: 5,
-    layers: [satelliteMap, earthquakes]
+    zoom: 3,
+    layers: [satelliteMap, earthquakes, plateData]
   });
 
   // Create a layer control
@@ -206,3 +201,22 @@ function createMap(earthquakes) {
   // Adding legend to the map
   legend.addTo(myMap);
 }
+
+const init = async() => {
+  // Perform a GET request to the query URL
+var earthData = await d3.json(queryUrl).then(function(data) {
+  // Once we get a response, send the data.features object to the createFeatures function
+  return data;
+});
+
+var platesData = await d3.json(platesUrl).then(function(platesData){
+  console.log("Inside ")
+  console.log(platesData)
+  return platesData;
+})
+console.log("After ")
+console.log(platesData)
+
+createFeatures(earthData.features, platesData.features);
+}
+init();
