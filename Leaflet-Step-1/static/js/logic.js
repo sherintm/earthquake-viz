@@ -1,6 +1,5 @@
 // Store our API endpoint inside queryUrl
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-//var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
 
 // Perform a GET request to the query URL
 d3.json(queryUrl).then(function(data) {
@@ -8,48 +7,22 @@ d3.json(queryUrl).then(function(data) {
   console.log(data.features)
   createFeatures(data.features);
 
-//   for (var i = 0; i < data.length; i++) {
-//     var location = data[i].location;
-//     console.log(location)
-//     if (location) {
-//       L.circle([location.coordinates[1], location.coordinates[0]]).addTo(myMap);
-//     }
-//   }
 });
 
 function createFeatures(earthquakeData) {
 
   // Define a function we want to run once for each feature in the features array
   // Give each feature a popup describing the place and time of the earthquake
-
-
   function onEachFeature(feature, layer) {
     layer.bindPopup("<h3>" + feature.properties.place +
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
 
-// Create a circle and pass in some initial options
-// L.circle([45.52, -122.69], {
-//     color: "green",
-//     fillColor: "green",
-//     fillOpacity: 0.75,
-//     radius: 500
-//   }).addTo(myMap);
 
-// var geojsonMarkerOptions = {
-//     radius: 8,
-//     fillColor: "red",
-//     color: "#000",
-//     weight: 1,
-//     opacity: 1,
-//     fillOpacity: 0.8
-// };
-
-
-function geojsonMarkerOptions(mag) {
+function geojsonMarkerOptions(mag,sig) {
     return({
     radius: markerRadius(mag),
-    fillColor: markerColour(mag),
+    fillColor: markerColour(sig),
     color: "#000",
     // weight: 1,
     opacity: 1,
@@ -61,7 +34,7 @@ function geojsonMarkerOptions(mag) {
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
       pointToLayer: function (feature, latlng){
-          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag))
+          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag, feature.properties.sig))
       },
     onEachFeature: onEachFeature
   });
@@ -94,34 +67,31 @@ function markerRadius(mag){
     else{
         radius += 7*inc;
     }
-    //console.log(radius)
-
     return radius;
 }
 
-function markerColour(mag){
-    var colour;
-    console.log(mag)
-    if (mag < 1){
-        colour = "#00ff00"
-    }
-    else if (mag <3){
-        colour = "#ccff99"
-    }
-    else if (mag <5){
-        colour = "#f8a816"
-    }
-    else if (mag <7){
-        colour = "#ff7800"
-    }
-    else if (mag <9){
-        colour = "#ff3300"
-    }
-    else{
-        colour = "#ff0000"
-    }
-    //console.log(colour)
-    return colour;
+function markerColour(sig){
+  var colour;
+  console.log(sig)
+  if (sig <= 10){
+      colour = "#80ff80"
+  }
+  else if (sig <= 30){
+      colour = "#d9ff66"
+  }
+  else if (sig <= 50){
+      colour = "#ffdb4d"
+  }
+  else if (sig <= 70){
+      colour = "#ffc266"
+  }
+  else if (sig <= 90){
+      colour = "#ff9900"
+  }
+  else{
+      colour = "#ff1a1a"
+  }
+  return colour;
 }
 
 function createMap(earthquakes) {
@@ -136,19 +106,7 @@ function createMap(earthquakes) {
     accessToken: API_KEY
   });
 
-//   var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-//     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-//     maxZoom: 18,
-//     id: "dark-v10",
-//     accessToken: API_KEY
-//   });
-
-  // Define a baseMaps object to hold our base layers
-//   var baseMaps = {
-//     "Street Map": streetmap,
-//     "Dark Map": darkmap
-//   };
-var baseMaps = {
+  var baseMaps = {
     "Street Map": streetmap
   };
 
@@ -175,16 +133,13 @@ var baseMaps = {
 
   // Set up the legend
   const legend = L.control({ position: 'bottomright' });
-
   legend.onAdd = function () {
     const div = L.DomUtil.create('div', 'info legend');
-    const mags = [0, 2, 4, 6, 8, 10];
-
+    const mags = [-10, 10, 30, 50, 70, 90];
+    const magsColour = ["#80ff80", "#d9ff66", "#ffdb4d", "#ffc266", "#ff9900", "#ff1a1a"]
     mags.forEach((mag, i) => {
       const next = mags[i + 1] ? '&ndash; ' + mags[i + 1] + '<br>' : '+';
-      div.innerHTML += `<div class="legend-range" style="background: ${markerColour(
-        mags[i]
-      )}">${mags[i]} ${next}</div>`;
+      div.innerHTML += `<div class="legend-range" style="background: ${magsColour[i]}">${mags[i]} ${next}</div>`;
     });
 
     return div;

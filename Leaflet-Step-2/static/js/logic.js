@@ -1,10 +1,6 @@
 // Store our API endpoint inside queryUrl
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-//var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
-
 var platesUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json"
-
-
 
 function createFeatures(earthquakeData, platesDataFeatures) {
 
@@ -14,24 +10,22 @@ function createFeatures(earthquakeData, platesDataFeatures) {
     layer.bindPopup("<h3>" + feature.properties.place +
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
-//console.log(plateData)
 
-function geojsonMarkerOptions(mag) {
+function geojsonMarkerOptions(mag,sig) {
     return({
     radius: markerRadius(mag),
-    fillColor: markerColour(mag),
+    fillColor: markerColour(sig),
     color: "#000",
     // weight: 1,
     opacity: 1,
     fillOpacity: 1})
 };
 
-
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
       pointToLayer: function (feature, latlng){
-          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag))
+          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag, feature.properties.sig))
       },
     onEachFeature: onEachFeature
   });
@@ -70,55 +64,36 @@ function markerRadius(mag){
     else{
         radius += 7*inc;
     }
-    //console.log(radius)
-
     return radius;
 }
 
-function markerColour(mag){
+function markerColour(sig){
     var colour;
-    console.log(mag)
-    if (mag < 1){
-        colour = "#00ff00"
+    console.log(sig)
+    if (sig <= 10){
+        colour = "#80ff80"
     }
-    else if (mag <3){
-        colour = "#ccff99"
+    else if (sig <= 30){
+        colour = "#d9ff66"
     }
-    else if (mag <5){
-        colour = "#f8a816"
+    else if (sig <= 50){
+        colour = "#ffdb4d"
     }
-    else if (mag <7){
-        colour = "#ff7800"
+    else if (sig <= 70){
+        colour = "#ffc266"
     }
-    else if (mag <9){
-        colour = "#ff3300"
+    else if (sig <= 90){
+        colour = "#ff9900"
     }
     else{
-        colour = "#ff0000"
+        colour = "#ff1a1a"
     }
-    //console.log(colour)
     return colour;
 }
 
 function createMap(earthquakes, plateData) {
 
-  // Define streetmap and darkmap layers
-//   var streetmap = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-//     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
-//     tileSize: 512,
-//     maxZoom: 18,
-//     zoomOffset: -1,
-//     id: "mapbox/streets-v11",
-//     accessToken: API_KEY
-//   });
 
-//   var darkmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-//     attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
-//     maxZoom: 18,
-//     id: "dark-v10",
-//     accessToken: API_KEY
-//   });
-  
   var grayscaleMap = L.tileLayer(
     'https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}',
     {
@@ -186,13 +161,11 @@ function createMap(earthquakes, plateData) {
 
   legend.onAdd = function () {
     const div = L.DomUtil.create('div', 'info legend');
-    const mags = [0, 2, 4, 6, 8, 10];
-
+    const mags = [-10, 10, 30, 50, 70, 90];
+    const magsColour = ["#80ff80", "#d9ff66", "#ffdb4d", "#ffc266", "#ff9900", "#ff1a1a"]
     mags.forEach((mag, i) => {
       const next = mags[i + 1] ? '&ndash; ' + mags[i + 1] + '<br>' : '+';
-      div.innerHTML += `<div class="legend-range" style="background: ${markerColour(
-        mags[i]
-      )}">${mags[i]} ${next}</div>`;
+      div.innerHTML += `<div class="legend-range" style="background: ${magsColour[i]}">${mags[i]} ${next}</div>`;
     });
 
     return div;
@@ -205,17 +178,14 @@ function createMap(earthquakes, plateData) {
 const init = async() => {
   // Perform a GET request to the query URL
 var earthData = await d3.json(queryUrl).then(function(data) {
+  console.log(data)
   // Once we get a response, send the data.features object to the createFeatures function
   return data;
 });
 
 var platesData = await d3.json(platesUrl).then(function(platesData){
-  console.log("Inside ")
-  console.log(platesData)
   return platesData;
 })
-console.log("After ")
-console.log(platesData)
 
 createFeatures(earthData.features, platesData.features);
 }
