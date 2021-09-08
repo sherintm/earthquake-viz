@@ -19,10 +19,10 @@ function createFeatures(earthquakeData) {
   }
 
 
-function geojsonMarkerOptions(mag,sig) {
+function geojsonMarkerOptions(mag,depth) {
     return({
     radius: markerRadius(mag),
-    fillColor: markerColour(sig),
+    fillColor: markerColour(depth),
     color: "#000",
     // weight: 1,
     opacity: 1,
@@ -34,7 +34,7 @@ function geojsonMarkerOptions(mag,sig) {
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
       pointToLayer: function (feature, latlng){
-          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag, feature.properties.sig))
+          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag,  feature.geometry.coordinates[2]))
       },
     onEachFeature: onEachFeature
   });
@@ -70,22 +70,22 @@ function markerRadius(mag){
     return radius;
 }
 
-function markerColour(sig){
+function markerColour(depth){
   var colour;
-  console.log(sig)
-  if (sig <= 10){
+  console.log(depth)
+  if (depth <= 10){
       colour = "#80ff80"
   }
-  else if (sig <= 30){
+  else if (depth <= 30){
       colour = "#d9ff66"
   }
-  else if (sig <= 50){
+  else if (depth <= 50){
       colour = "#ffdb4d"
   }
-  else if (sig <= 70){
+  else if (depth <= 70){
       colour = "#ffc266"
   }
-  else if (sig <= 90){
+  else if (depth <= 90){
       colour = "#ff9900"
   }
   else{
@@ -120,7 +120,7 @@ function createMap(earthquakes) {
     center: [
       37.09, -95.71
     ],
-    zoom: 5,
+    zoom: 3,
     layers: [streetmap, earthquakes]
   });
 

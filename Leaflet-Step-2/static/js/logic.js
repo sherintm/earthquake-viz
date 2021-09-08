@@ -11,21 +11,21 @@ function createFeatures(earthquakeData, platesDataFeatures) {
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>");
   }
 
-function geojsonMarkerOptions(mag,sig) {
+  function geojsonMarkerOptions(mag,depth) {
     return({
     radius: markerRadius(mag),
-    fillColor: markerColour(sig),
+    fillColor: markerColour(depth),
     color: "#000",
     // weight: 1,
     opacity: 1,
     fillOpacity: 1})
-};
+  };
 
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
       pointToLayer: function (feature, latlng){
-          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag, feature.properties.sig))
+          return L.circleMarker(latlng, geojsonMarkerOptions(feature.properties.mag, feature.geometry.coordinates[2]))
       },
     onEachFeature: onEachFeature
   });
@@ -67,22 +67,22 @@ function markerRadius(mag){
     return radius;
 }
 
-function markerColour(sig){
+function markerColour(depth){
     var colour;
-    console.log(sig)
-    if (sig <= 10){
+    console.log("Depth: "+depth)
+    if (depth <= 10){
         colour = "#80ff80"
     }
-    else if (sig <= 30){
+    else if (depth <= 30){
         colour = "#d9ff66"
     }
-    else if (sig <= 50){
+    else if (depth <= 50){
         colour = "#ffdb4d"
     }
-    else if (sig <= 70){
+    else if (depth <= 70){
         colour = "#ffc266"
     }
-    else if (sig <= 90){
+    else if (depth <= 90){
         colour = "#ff9900"
     }
     else{
@@ -177,16 +177,16 @@ function createMap(earthquakes, plateData) {
 
 const init = async() => {
   // Perform a GET request to the query URL
-var earthData = await d3.json(queryUrl).then(function(data) {
-  console.log(data)
+  var earthData = await d3.json(queryUrl).then(function(data) {
   // Once we get a response, send the data.features object to the createFeatures function
   return data;
-});
+  });
+  console.log(earthData)
 
-var platesData = await d3.json(platesUrl).then(function(platesData){
-  return platesData;
-})
+  var platesData = await d3.json(platesUrl).then(function(platesData){
+  return platesData;  
+  })
 
-createFeatures(earthData.features, platesData.features);
+  createFeatures(earthData.features, platesData.features);
 }
 init();
